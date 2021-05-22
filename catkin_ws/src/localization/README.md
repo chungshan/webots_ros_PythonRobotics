@@ -19,6 +19,7 @@ You will see many rosservices like this:
 /TurtleBot3Burger_37899_username_computer_name/set_logger_level
 ```
 37899 is your PID of ros controller
+
 3. Running nodes with your PID
 ```
 roslaunch roslaunch localization ekf.launch pid:=37899
@@ -26,8 +27,10 @@ roslaunch roslaunch localization ekf.launch pid:=37899
 4. Teleporate your Turtlebot3 to see the result
 # Visualization
 You can see the results in rivz. There are three topics being published:
-```/xDR``` : Dead-reckoning state
-```/xEst```: Estimated state from filter
-```/xTrue```: True state
+1. ```/xDR``` : Dead-reckoning state
+
+2. ```/xEst```: Estimated state from filter
+
+3. ```/xTrue```: True state
 
 
