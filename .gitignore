@@ -1,0 +1,7 @@
+.idea/
+catkin_ws/build
+catkin_ws/devel
+*.catkin_workspace
+*.pyc
+*.wbproj
+sim_world/.idea

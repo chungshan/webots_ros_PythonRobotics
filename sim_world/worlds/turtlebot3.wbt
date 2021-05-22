@@ -1,0 +1,28 @@
+#VRML_SIM R2020b utf8
+WorldInfo {
+  coordinateSystem "NUE"
+}
+Viewpoint {
+  orientation -0.1387849619864276 -0.9743455680598169 -0.17717067570176054 1.871685911227754
+  position -1.1235072364277696 0.687414273659991 -0.4345559143895431
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 50 50
+  wallHeight 0.5
+}
+TurtleBot3Burger {
+  rotation 0 1 0 -1.5708
+  controller "ros"
+  extensionSlot [
+    InertialUnit {
+    }
+    GPS {
+    }
+    RobotisLds01 {
+    }
+  ]
+}
