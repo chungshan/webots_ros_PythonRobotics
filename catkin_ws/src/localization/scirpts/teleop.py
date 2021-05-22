@@ -9,6 +9,9 @@ rospy.init_node('teleop', anonymous=True)
 cmd_pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
 r = rospy.Rate(30)
 cmd = Twist()
+print("--- Teleop your turtlebot3 ---")
+print("W: Move forward\nX: Move backward\nA: Rotate positive Z\nD: Rotate negative Z\nS: Stop")
+print("------------------------------")
 while not rospy.is_shutdown():
     key = getkey()
     if key == "w":
