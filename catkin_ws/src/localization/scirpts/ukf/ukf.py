@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import math
-import matplotlib.pyplot as plt
 import numpy as np
-from scipy.spatial.transform import Rotation as Rot
 import rospy
 from sensor_msgs.msg import NavSatFix, Imu
 from geometry_msgs.msg import Twist, PoseStamped
@@ -10,7 +8,7 @@ from publisher import ros_publisher
 from tf.transformations import *
 import sys
 import scipy
-# Covariance for EKF simulation
+# Covariance for UKF simulation
 Q = np.diag([
     0.1,  # variance of location on x-axis
     0.1,  # variance of location on y-axis

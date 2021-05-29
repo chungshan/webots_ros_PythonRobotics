@@ -3,20 +3,22 @@ WorldInfo {
   coordinateSystem "NUE"
 }
 Viewpoint {
-  orientation -0.08078257024590646 -0.9917675244618718 -0.09935468668983856 1.844241763868795
-  position -2.597322025291052 0.8848726620575549 -0.7803363044516034
-  follow "TurtleBot3Burger"
+  orientation -0.3046725651932926 -0.8973442804960762 -0.31929276578011967 1.6314612615366626
+  position -6.4475225662787725 7.361624740404931 0.6367174629971275
+  follow "TurtleBot3Burger:LDS-01"
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 RectangleArena {
-  floorSize 50 50
+  translation 4.51 0 0
+  floorSize 10 10
+  floorTileSize 2 2
   wallHeight 0.5
 }
 TurtleBot3Burger {
-  hidden rotation_12 -0.004229929800669232 -0.9999910535878812 -2.0930376318607238e-05 0.021499114957073684
+  translation 0 0 -1.45454e-05
   rotation 0 1 0 -1.5708
   controller "ros"
   extensionSlot [
@@ -27,4 +29,68 @@ TurtleBot3Burger {
     RobotisLds01 {
     }
   ]
+}
+DEF rfid_01 Solid {
+  translation 6.08 0.05 1.48
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.0980392 1 0
+        metalness 0
+      }
+      geometry Box {
+        size 0.1 0.1 0.1
+      }
+    }
+  ]
+}
+DEF rfid_02 Solid {
+  translation 1.47 0.05 2.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.0980392 1 0
+        metalness 0
+      }
+      geometry Box {
+        size 0.1 0.1 0.1
+      }
+    }
+  ]
+  name "solid(1)"
+}
+DEF rfid_03 Solid {
+  translation 7.57 0.05 -2.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.0980392 1 0
+        metalness 0
+      }
+      geometry Box {
+        size 0.1 0.1 0.1
+      }
+    }
+  ]
+  name "solid(2)"
+}
+DEF rfid_04 Solid {
+  translation 4.12 0.05 -3.19
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.0980392 1 0
+        metalness 0
+      }
+      geometry Box {
+        size 0.1 0.1 0.1
+      }
+    }
+  ]
+  name "solid(3)"
+}
+Robot {
+  name "supervisor"
+  controller "supervisor"
+  supervisor TRUE
 }
