@@ -28,8 +28,16 @@ MAX_X = 15.0
 MAX_Y = 25.0
 
 # simulation parameters
-NOISE_RANGE = 2.0  # [m] 1σ range noise parameter
-NOISE_SPEED = 0.5  # [m/s] 1σ speed noise parameter
+NOISE_RANGE = 0.2  # [m] 1σ range noise parameter
+NOISE_SPEED = 0.1  # [m/s] 1σ speed noise parameter
+
+
+class Turtlebot3_state:
+    def __init__(self):
+        self.cmd_input = [None, None]  # cmd input: v, yaw_rate
+        self.gps = [None, None, None]  # gps of TurtleBot3
+        self.orientation = [None, None, None]  # pitch, roll, yaw
+        self.landmarks = [None] * 4  # 4 landmark's position
 
 class GridMap:
 
@@ -46,9 +54,8 @@ class GridMap:
         self.dy = 0.0  # movement distance
 
 def histogram_filter_localization(grid_map, u, z, yaw):
-    grid_map = motion_update(grid_map, u, yaw)
-
-    grid_map = observation_update(grid_map, z, RANGE_STD)
+    grid_map = motion_update(grid_map, u, yaw) # (1)
+    grid_map = observation_update(grid_map, z, RANGE_STD) # (2)
 
     return grid_map
 
@@ -68,35 +75,33 @@ def observation_update(grid_map, z, std):
     for iz in range(z.shape[0]):
         for ix in range(grid_map.x_w):
             for iy in range(grid_map.y_w):
-                grid_map.data[ix][iy] *= calc_gaussian_observation_pdf(
-                    grid_map, z, iz, ix, iy, std)
+                grid_map.data[ix][iy] *= calc_gaussian_observation_pdf(grid_map, z, iz, ix, iy, std)
 
     grid_map = normalize_probability(grid_map)
 
     return grid_map
 
 def calc_input():
-    global cmd_input
-    v = cmd_input[0]  # [m/s]
-    yawrate = cmd_input[1]  # [rad/s]
+    v = turtlebot3_state.cmd_input[0]  # [m/s]
+    yawrate = turtlebot3_state.cmd_input[1]  # [rad/s]
     u = np.array([[v, yawrate]]).T
     return u
 
 
-def observation(xTrue, u, RFID, xd):
-    xTrue = np.array([[gps[0]], [gps[1]], [orientation[2]], [u[0][0]]]) # x, y, yaw, v
+def observation(u, LM_pos, xd):
+    xTrue = np.array([[turtlebot3_state.gps[0]], [turtlebot3_state.gps[1]], [turtlebot3_state.orientation[2]], [u[0][0]]]) # x, y, yaw, v
 
     z = np.zeros((0, 3))
 
-    for i in range(len(RFID[:, 0])):
+    for i in range(len(LM_pos[:, 0])):
 
-        dx = xTrue[0, 0] - RFID[i, 0]
-        dy = xTrue[1, 0] - RFID[i, 1]
+        dx = xTrue[0, 0] - LM_pos[i, 0]
+        dy = xTrue[1, 0] - LM_pos[i, 1]
         d = math.hypot(dx, dy)
         if d <= MAX_RANGE:
             # add noise to range observation
             dn = d + np.random.randn() * NOISE_RANGE
-            zi = np.array([dn, RFID[i, 0], RFID[i, 1]])
+            zi = np.array([dn, LM_pos[i, 0], LM_pos[i, 1]])
             z = np.vstack((z, zi))
 
     # add noise to speed
@@ -144,7 +149,6 @@ def map_shift(grid_map, x_shift, y_shift):
             if 0 <= nix < grid_map.x_w and 0 <= niy < grid_map.y_w:
                 grid_map.data[ix + x_shift][iy + y_shift] =\
                     tmp_grid_map[ix][iy]
-
     return grid_map
 
 def motion_update(grid_map, u, yaw):
@@ -198,11 +202,6 @@ def observation_model(x):
 
     return z
 
-def draw_heat_map(data, mx, my):
-    max_value = max([max(i_data) for i_data in data])
-    plt.pcolor(mx, my, data, vmax=max_value, cmap=plt.cm.get_cmap("Blues"))
-    plt.axis("equal")
-
 def convert_to_pos(max_grid, grid_map):
 
     x = max_grid[0] * XY_RESOLUTION + grid_map.min_x
@@ -210,69 +209,56 @@ def convert_to_pos(max_grid, grid_map):
     return [x, y]
 
 
-cmd_input = [None, None] # cmd input: v, yaw_rate
-gps = [None, None, None] # gps of TurtleBot3
-orientation = [None, None, None] # pitch, roll, yaw
-rfid_pos = [None] * 4 # 4 rfid's position
+turtlebot3_state = Turtlebot3_state()
+
 def gps_cb(data):
-    global gps
-    gps[0] = data.latitude
-    gps[1] = -data.longitude
-    gps[2] = data.altitude
-    # print(lat, lon , alti)
+    turtlebot3_state.gps = [data.latitude, -data.longitude, data.altitude]
 
 def cmd_cb(data):
-    global cmd_input
-    cmd_input[0] = data.linear.x
-    cmd_input[1] = data.angular.z
+    turtlebot3_state.cmd_input = [data.linear.x, data.angular.z]
 
 def imu_cb(data):
-    global orientation
-    orientation = euler_from_quaternion([data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w])
+    turtlebot3_state.orientation = euler_from_quaternion([data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w])
 
-def rfid_pose_cb(data):
+def landmark_pose_cb(data):
     for i in range(len(data.poses)):
-        rfid_pos[i] = [data.poses[i].position.x, data.poses[i].position.y]
+        turtlebot3_state.landmarks[i] = [data.poses[i].position.x, data.poses[i].position.y]
 
 def main():
     print(__file__ + " start!!")
     rospy.init_node('histogram_filter', anonymous=True)
     pid = sys.argv[1]
+
     rospy.Subscriber(f"/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/gps/values", NavSatFix, gps_cb)
     rospy.Subscriber(f"/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/inertial_unit/roll_pitch_yaw", Imu, imu_cb)
     rospy.Subscriber("cmd_vel", Twist, cmd_cb)
-    rospy.Subscriber("rfid_pos", PoseArray, rfid_pose_cb)
+    rospy.Subscriber("LM_pos", PoseArray, landmark_pose_cb)
     ros_pub = ros_publisher()
-    while None in cmd_input or None in gps or None in orientation or len(rfid_pos) == 0:
-        continue
     r = rospy.Rate(30)
 
-    # RF_ID positions [x, y]
-    RF_ID = np.array(rfid_pos)
-    # print(RF_ID)
-    time = 0.0
+    # wait for state
+    while None in turtlebot3_state.cmd_input or None in turtlebot3_state.gps or None in turtlebot3_state.orientation:
+        r.sleep()
+
     x_dr = np.zeros((4, 1))  # Dead reckoning
     xTrue = np.zeros((4, 1))
     grid_map = init_grid_map(XY_RESOLUTION, MIN_X, MIN_Y, MAX_X, MAX_Y)
 
-
-
     while not rospy.is_shutdown():
-        time += DT
         u = calc_input()
 
-        # RF_ID positions [x, y]
-        RF_ID = np.array(rfid_pos)
+        # landmark positions [x, y]
+        LM_pos = np.array(turtlebot3_state.landmarks)
 
         yaw = xTrue[2, 0]  # Orientation is known
-        xTrue, z, ud, x_dr = observation(xTrue, u, RF_ID, x_dr)
+        xTrue, z, ud, x_dr = observation(u, LM_pos, x_dr)
         grid_map = histogram_filter_localization(grid_map, u, z, yaw)
         inds = grid_map.data.flatten().argsort()[-10:]
         x_est = []
         for ind in inds:
             max_grid = np.unravel_index(ind, grid_map.data.shape)
             x_est.append(convert_to_pos(max_grid, grid_map))
-        ros_pub.publish(xTrue, x_est, x_dr, RF_ID, MAX_RANGE)
+        ros_pub.publish(xTrue, x_est, x_dr, LM_pos, MAX_RANGE)
         r.sleep()
 
 if __name__ == '__main__':

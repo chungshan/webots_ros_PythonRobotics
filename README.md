@@ -10,9 +10,13 @@ Implement [PythonRobotics](https://github.com/AtsushiSakai/PythonRobotics) on Tu
 # Table of Contents
 * [Localization](catkin_ws/src/localization)
   
-    * [Extended Kalman Filter](catkin_ws/src/localization/scirpts/ekf)
+    * [Extended Kalman filter](catkin_ws/src/localization/scirpts/ekf)
     
-    * [Unscented Kalman Filter](catkin_ws/src/localization/scirpts/ukf)
+    * [Unscented Kalman filter](catkin_ws/src/localization/scirpts/ukf)
+    
+    * [Histogram filter](catkin_ws/src/localization/scirpts/histogram_filter)
+    
+    * [Particle filter](catkin_ws/src/localization/scirpts/particle_filter)
     
 # How to Use
 1. Git clone

@@ -6,35 +6,44 @@ from scipy.spatial.transform import Rotation as Rot
 import rospy
 from sensor_msgs.msg import NavSatFix, Imu
 from geometry_msgs.msg import Twist, PoseStamped
+from geometry_msgs.msg import PoseArray, Pose
+
 from publisher import ros_publisher
 from tf.transformations import *
 import sys
 import scipy
 
 # Estimation parameter of PF
-Q = np.diag([0.2]) ** 2  # range error
-R = np.diag([0.1, np.deg2rad(1)]) ** 2  # input error
+Q = np.diag([0.01]) ** 2  # range error
+R = np.diag([0.5, np.deg2rad(10)]) ** 2  # input error
 
 #  Simulation parameter
-Q_sim = np.diag([0.1]) ** 2
-R_sim = np.diag([0.1, np.deg2rad(1)]) ** 2
+Q_sim = np.diag([0.01]) ** 2
+R_sim = np.diag([0.5, np.deg2rad(10)]) ** 2
 
 DT = 1/30  # time tick [s]
-MAX_RANGE = 20.0  # maximum observation range
+MAX_RANGE = 5  # maximum observation range
 # Particle filter parameter
 NP = 100  # Number of Particle
 NTh = NP / 2.0  # Number of particle for re-sampling
 
+
+class Turtlebot3_state:
+    def __init__(self):
+        self.cmd_input = [None, None]  # cmd input: v, yaw_rate
+        self.gps = [None, None, None]  # gps of TurtleBot3
+        self.orientation = [None, None, None]  # pitch, roll, yaw
+        self.landmarks = [None] * 4  # 4 landmark's position
+
 def calc_input():
-    global cmd_input
-    v = cmd_input[0]  # [m/s]
-    yawrate = cmd_input[1]  # [rad/s]
+    v = turtlebot3_state.cmd_input[0]  # [m/s]
+    yawrate = turtlebot3_state.cmd_input[1]  # [rad/s]
     u = np.array([[v, yawrate]]).T
     return u
 
 
-def observation(x_true, xd, u, rf_id):
-    xTrue = np.array([[gps[0]], [gps[1]], [orientation[2]], [u[0][0]]]) # x, y, yaw, v
+def observation(xd, u, rf_id):
+    x_true = np.array([[turtlebot3_state.gps[0]], [turtlebot3_state.gps[1]], [turtlebot3_state.orientation[2]], [u[0][0]]]) # x, y, yaw, v
     # add noise to gps x-y
     z = np.zeros((0, 3))
     for i in range(len(rf_id[:, 0])):
@@ -53,7 +62,7 @@ def observation(x_true, xd, u, rf_id):
     ud = np.array([[ud1, ud2]]).T
     xd = motion_model(xd, ud)
 
-    return xTrue, z, xd, ud
+    return x_true, z, xd, ud
 
 
 def motion_model(x, u):
@@ -114,7 +123,7 @@ def pf_localization(px, pw, z, u):
         ud1 = u[0, 0] + np.random.randn() * R[0, 0] ** 0.5
         ud2 = u[1, 0] + np.random.randn() * R[1, 1] ** 0.5
         ud = np.array([[ud1, ud2]]).T
-        x = motion_model(x, ud)
+        x = motion_model(x, ud) # (1)
 
         #  Calc Importance Weight
         for i in range(len(z[:, 0])):
@@ -122,14 +131,13 @@ def pf_localization(px, pw, z, u):
             dy = x[1, 0] - z[i, 2]
             pre_z = math.hypot(dx, dy)
             dz = pre_z - z[i, 0]
-            w = w * gauss_likelihood(dz, math.sqrt(Q[0, 0]))
+            w = w * gauss_likelihood(dz, math.sqrt(Q[0, 0])) # (2)
 
         px[:, ip] = x[:, 0]
         pw[0, ip] = w
-
     pw = pw / pw.sum()  # normalize
 
-    x_est = px.dot(pw.T)
+    x_est = px.dot(pw.T) # (3)
     p_est = calc_covariance(x_est, px, pw)
 
     N_eff = 1.0 / (pw.dot(pw.T))[0, 0]  # Effective particle number
@@ -144,37 +152,33 @@ def re_sampling(px, pw):
 
     w_cum = np.cumsum(pw)
     base = np.arange(0.0, 1.0, 1 / NP)
-    re_sample_id = base + np.random.uniform(0, 1 / NP)
+    r = np.random.uniform(0, 1 / NP)
+    re_sample_id = r + base # (4)
     indexes = []
     ind = 0
     for ip in range(NP):
-        while re_sample_id[ip] > w_cum[ind]:
+        while re_sample_id[ip] > w_cum[ind]: # (5)
             ind += 1
         indexes.append(ind)
 
-    px = px[:, indexes]
+    px = px[:, indexes] # (6)
     pw = np.zeros((1, NP)) + 1.0 / NP  # init weight
 
     return px, pw
 
-cmd_input = [None, None]
-gps = [None, None, None]
-orientation = [None, None, None] # pitch, roll, yaw
+turtlebot3_state = Turtlebot3_state()
 def gps_cb(data):
-    global gps
-    gps[0] = data.latitude
-    gps[1] = -data.longitude
-    gps[2] = data.altitude
-    # print(lat, lon , alti)
+    turtlebot3_state.gps = [data.latitude, -data.longitude, data.altitude]
 
 def cmd_cb(data):
-    global cmd_input
-    cmd_input[0] = data.linear.x
-    cmd_input[1] = data.angular.z
+    turtlebot3_state.cmd_input = [data.linear.x, data.angular.z]
 
 def imu_cb(data):
-    global orientation
-    orientation = euler_from_quaternion([data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w])
+    turtlebot3_state.orientation = euler_from_quaternion([data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w])
+
+def landmark_pose_cb(data):
+    for i in range(len(data.poses)):
+        turtlebot3_state.landmarks[i] = [data.poses[i].position.x, data.poses[i].position.y]
 
 def main():
     print(__file__ + " start!!")
@@ -183,33 +187,30 @@ def main():
     rospy.Subscriber(f"/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/gps/values", NavSatFix, gps_cb)
     rospy.Subscriber(f"/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/inertial_unit/roll_pitch_yaw", Imu, imu_cb)
     rospy.Subscriber("cmd_vel", Twist, cmd_cb)
-    ros_pub = ros_publisher()
-    while None in cmd_input or None in gps or None in orientation:
-        continue
+    rospy.Subscriber("LM_pos", PoseArray, landmark_pose_cb)
     r = rospy.Rate(30)
-    time = 0.0
-    # RF_ID positions [x, y]
-    rf_id = np.array([[10.0, 0.0],
-                      [10.0, 10.0],
-                      [0.0, 15.0],
-                      [-5.0, 20.0]])
+
+    ros_pub = ros_publisher()
+    while None in turtlebot3_state.cmd_input or None in turtlebot3_state.gps or None in turtlebot3_state.orientation:
+        r.sleep()
 
     # State Vector [x y yaw v]
     x_est = np.zeros((4, 1))
     x_true = np.zeros((4, 1))
-    px = np.zeros((4, NP))  # Particle store
+    px = np.zeros((4, NP))  # Particle initialization
     pw = np.zeros((1, NP)) + 1.0 / NP  # Particle weight
     x_dr = np.zeros((4, 1))  # Dead reckoning
 
     while not rospy.is_shutdown():
-        time += DT
         u = calc_input()
-        x_true, z, x_dr, ud = observation(x_true, x_dr, u, rf_id)
+        # landmark positions [x, y]
+        LM_pos = np.array(turtlebot3_state.landmarks)
+
+        x_true, z, x_dr, ud = observation(x_dr, u, LM_pos)
 
         x_est, PEst, px, pw = pf_localization(px, pw, z, ud)
 
-        ros_pub.publish(x_true, x_est, x_dr)
+        ros_pub.publish(x_true, px, x_dr, LM_pos, MAX_RANGE)
         r.sleep()
-
 if __name__ == '__main__':
     main()

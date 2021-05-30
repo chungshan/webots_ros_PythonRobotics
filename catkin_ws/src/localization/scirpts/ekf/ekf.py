@@ -23,25 +23,26 @@ INPUT_NOISE = np.diag([0.5, np.deg2rad(1)]) ** 2
 GPS_NOISE = np.diag([0.05, 0.05]) ** 2
 
 DT = 1/30  # time tick [s]
-SIM_TIME = 50.0  # simulation time [s]
 
-show_animation = False
-
+class Turtlebot3_state:
+    def __init__(self):
+        self.cmd_input = [None, None]  # cmd input: v, yaw_rate
+        self.gps = [None, None, None]  # gps of TurtleBot3
+        self.orientation = [None, None, None]  # pitch, roll, yaw
+        self.landmarks = [None] * 4  # 4 landmark's position
 
 def calc_input():
-    global cmd_input
-    v = cmd_input[0]  # [m/s]
-    yawrate = cmd_input[1]  # [rad/s]
+    v = turtlebot3_state.cmd_input[0]  # [m/s]
+    yawrate = turtlebot3_state.cmd_input[1]  # [rad/s]
     u = np.array([[v], [yawrate]])
     return u
 
 
-def observation(xTrue, xd, u):
-    xTrue = np.array([[gps[0]], [gps[1]], [orientation[2]], [u[0]]]) # x, y, yaw, v
+def observation(xd, u):
+    xTrue = np.array([[turtlebot3_state.gps[0]], [turtlebot3_state.gps[1]], [turtlebot3_state.orientation[2]], [u[0]]]) # x, y, yaw, v
 
     # add noise to gps x-y
     z = observation_model(xTrue) + GPS_NOISE @ np.random.randn(2, 1)
-    # z = np.array([[gps[0]], [gps[1]]])
     # add noise to input
     ud = u + INPUT_NOISE @ np.random.randn(2, 1)
 
@@ -59,10 +60,7 @@ def motion_model(x, u):
                   [DT * math.sin(x[2, 0]), 0],
                   [0.0, DT],
                   [1.0, 0.0]])
-    # print(F @ x)
-    # print(x)
-    # print(B)
-    # print(u)
+
     x = F @ x + B @ u
 
     return x
@@ -116,63 +114,30 @@ def jacob_h():
 
 
 def ekf_estimation(xEst, PEst, z, u):
-    #  Predict
-    xPred = motion_model(xEst, u)
-    jF = jacob_f(xEst, u)
-    PPred = jF @ PEst @ jF.T + Q
+    # Predict
+    xPred = motion_model(xEst, u) # (1)
+    jF = jacob_f(xEst, u) # Jacobian of state transition
+    PPred = jF @ PEst @ jF.T + Q # (2)
 
-    #  Update
-    jH = jacob_h()
+    # Update
+    jH = jacob_h() # Jacobian of observation matrix
     zPred = observation_model(xPred)
-    y = z - zPred
-    S = jH @ PPred @ jH.T + R
-    K = PPred @ jH.T @ np.linalg.inv(S)
-    xEst = xPred + K @ y
-    PEst = (np.eye(len(xEst)) - K @ jH) @ PPred
+    y_residual = z - zPred # (3)
+    S = jH @ PPred @ jH.T + R # (4)
+    K = PPred @ jH.T @ np.linalg.inv(S) # (5)
+    xEst = xPred + K @ y_residual # (6)
+    PEst = (np.eye(len(xEst)) - K @ jH) @ PPred # (7)
     return xEst, PEst
 
-
-def plot_covariance_ellipse(xEst, PEst):  # pragma: no cover
-    Pxy = PEst[0:2, 0:2]
-    eigval, eigvec = np.linalg.eig(Pxy)
-
-    if eigval[0] >= eigval[1]:
-        bigind = 0
-        smallind = 1
-    else:
-        bigind = 1
-        smallind = 0
-
-    t = np.arange(0, 2 * math.pi + 0.1, 0.1)
-    a = math.sqrt(eigval[bigind])
-    b = math.sqrt(eigval[smallind])
-    x = [a * math.cos(it) for it in t]
-    y = [b * math.sin(it) for it in t]
-    angle = math.atan2(eigvec[1, bigind], eigvec[0, bigind])
-    rot = Rot.from_euler('z', angle).as_matrix()[0:2, 0:2]
-    fx = rot @ (np.array([x, y]))
-    px = np.array(fx[0, :] + xEst[0, 0]).flatten()
-    py = np.array(fx[1, :] + xEst[1, 0]).flatten()
-    plt.plot(px, py, "--r")
-
-cmd_input = [None, None]
-gps = [None, None, None]
-orientation = [None, None, None] # pitch, roll, yaw
+turtlebot3_state = Turtlebot3_state()
 def gps_cb(data):
-    global gps
-    gps[0] = data.latitude
-    gps[1] = -data.longitude
-    gps[2] = data.altitude
-    # print(lat, lon , alti)
+    turtlebot3_state.gps = [data.latitude, -data.longitude, data.altitude]
 
 def cmd_cb(data):
-    global cmd_input
-    cmd_input[0] = data.linear.x
-    cmd_input[1] = data.angular.z
+    turtlebot3_state.cmd_input = [data.linear.x, data.angular.z]
 
 def imu_cb(data):
-    global orientation
-    orientation = euler_from_quaternion([data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w])
+    turtlebot3_state.orientation = euler_from_quaternion([data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w])
 
 def main():
     print(__file__ + " start!!")
@@ -181,11 +146,10 @@ def main():
     rospy.Subscriber(f"/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/gps/values", NavSatFix, gps_cb)
     rospy.Subscriber(f"/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/inertial_unit/roll_pitch_yaw", Imu, imu_cb)
     rospy.Subscriber("cmd_vel", Twist, cmd_cb)
-    ros_pub = ros_publisher()
-    while None in cmd_input or None in gps or None in orientation:
-        continue
     r = rospy.Rate(30)
-    time = 0.0
+    ros_pub = ros_publisher()
+    while None in turtlebot3_state.cmd_input or None in turtlebot3_state.gps or None in turtlebot3_state.orientation:
+        r.sleep()
     # State Vector [x y yaw v]'
     xEst = np.zeros((4, 1)) # estimate state
     xTrue = np.zeros((4, 1)) # True state
@@ -194,11 +158,9 @@ def main():
     xDR = np.zeros((4, 1))  # Dead reckoning
 
     while not rospy.is_shutdown():
-        time += DT
         u = calc_input()
-        xTrue, z, xDR, ud = observation(xTrue, xDR, u)
+        xTrue, z, xDR, ud = observation(xDR, u)
         xEst, PEst = ekf_estimation(xEst, PEst, z, ud)
-        # print(f"x: {xTrue[0]},y: {xTrue[1]},yaw: {xTrue[2]},v: {xTrue[3]}")
         # trajectory pub
         ros_pub.publish(xTrue, xEst, xDR)
         r.sleep()

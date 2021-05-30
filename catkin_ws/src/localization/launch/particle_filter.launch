@@ -3,5 +3,5 @@
     <node pkg="localization" type="bring_up.py" name="bring_up" args="$(arg pid)"/>
     <node pkg="localization" type="particle_filter.py" name="particle_filter" args="$(arg pid)"/>
     <node pkg="localization" type="teleop.py" name="teleop" output="screen"/>
-    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find localization)/launch/config.rviz" />
+    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find localization)/launch/pf_config.rviz" />
 </launch>

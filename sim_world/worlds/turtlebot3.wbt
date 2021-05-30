@@ -30,7 +30,7 @@ TurtleBot3Burger {
     }
   ]
 }
-DEF rfid_01 Solid {
+DEF LM_01 Solid {
   translation 6.08 0.05 1.48
   children [
     Shape {
@@ -44,7 +44,7 @@ DEF rfid_01 Solid {
     }
   ]
 }
-DEF rfid_02 Solid {
+DEF LM_02 Solid {
   translation 1.47 0.05 2.5
   children [
     Shape {
@@ -59,7 +59,7 @@ DEF rfid_02 Solid {
   ]
   name "solid(1)"
 }
-DEF rfid_03 Solid {
+DEF LM_03 Solid {
   translation 7.57 0.05 -2.5
   children [
     Shape {
@@ -74,7 +74,7 @@ DEF rfid_03 Solid {
   ]
   name "solid(2)"
 }
-DEF rfid_04 Solid {
+DEF LM_04 Solid {
   translation 4.12 0.05 -3.19
   children [
     Shape {

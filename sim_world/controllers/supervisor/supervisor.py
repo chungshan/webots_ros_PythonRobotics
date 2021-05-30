@@ -10,10 +10,10 @@ supervisor = Supervisor()
 
 # get the time step of the current world.
 timestep = int(supervisor.getBasicTimeStep())
-rfid_01 = supervisor.getFromDef('rfid_01')
-rfid_02 = supervisor.getFromDef('rfid_02')
-rfid_03 = supervisor.getFromDef('rfid_03')
-rfid_04 = supervisor.getFromDef('rfid_04')
+rfid_01 = supervisor.getFromDef('LM_01')
+rfid_02 = supervisor.getFromDef('LM_02')
+rfid_03 = supervisor.getFromDef('LM_03')
+rfid_04 = supervisor.getFromDef('LM_04')
 rfid_list = [rfid_01, rfid_02, rfid_03, rfid_04]
 # You should insert a getDevice-like function in order to get the
 # instance of a device of the robot. Something like:
@@ -21,7 +21,7 @@ rfid_list = [rfid_01, rfid_02, rfid_03, rfid_04]
 #  ds = robot.getDistanceSensor('dsname')
 #  ds.enable(timestep)
 rospy.init_node('supervisor', anonymous=True)
-rfid_pos_pub = rospy.Publisher("rfid_pos", PoseArray, queue_size=10)
+rfid_pos_pub = rospy.Publisher("LM_pos", PoseArray, queue_size=10)
 r = rospy.Rate(300)
 # Main loop:
 # - perform simulation steps until Webots is stopping the controller

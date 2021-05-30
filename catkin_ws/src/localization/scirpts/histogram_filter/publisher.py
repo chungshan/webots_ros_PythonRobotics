@@ -12,7 +12,7 @@ class ros_publisher():
         self.xTrue_pub = rospy.Publisher("xTrue", Path, queue_size=10)
         self.xDR_pub = rospy.Publisher("xDR", Path, queue_size=10)
         self.xEst_pub = rospy.Publisher("xEst", PointCloud, queue_size=10)
-        self.rfid_marker = rospy.Publisher("visualization_marker_rfid", Marker, queue_size=10)
+        self.LM_marker = rospy.Publisher("visualization_marker_LM", Marker, queue_size=10)
         self.line_marker = rospy.Publisher("visualization_marker_line", Marker, queue_size=10)
         self.xTrue_path = Path()
         self.xDR_path = Path()
@@ -20,7 +20,7 @@ class ros_publisher():
         self.xTrue_list = []
 
         self.xDR_list = []
-    def publish(self, xTrue, xEst, xDR, rfid_pose, max_range):
+    def publish(self, xTrue, xEst, xDR, LM_pose, max_range):
         grid = PointCloud()
         grid.header.stamp = rospy.Time.now()
         grid.header.frame_id = "map"
@@ -74,11 +74,11 @@ class ros_publisher():
         marker.header.stamp = rospy.Time.now()
         marker.header.frame_id = "map"
         marker.type = 8
-        for pos in rfid_pose:
-            rfid_pos = Point()
-            rfid_pos.x = pos[0]
-            rfid_pos.y = pos[1]
-            marker.points.append(rfid_pos)
+        for pos in LM_pose:
+            LM_pos = Point()
+            LM_pos.x = pos[0]
+            LM_pos.y = pos[1]
+            marker.points.append(LM_pos)
             marker.scale.x = 0.1
             marker.scale.y = 0.1
             marker.scale.z = 0.1
@@ -87,24 +87,24 @@ class ros_publisher():
             marker.color.g = 1
             marker.color.b = 0
             marker.color.a = 1
-        self.rfid_marker.publish(marker)
+        self.LM_marker.publish(marker)
 
-        # rfid lines
+        # LM lines
         line_list = Marker()
         line_list.header.stamp = rospy.Time.now()
         line_list.header.frame_id = "map"
         line_list.type = 5
-        for pos in rfid_pose:
+        for pos in LM_pose:
             if np.sqrt(np.sum((xTrue[0:2].T[0] - pos)**2)) < max_range:
                 robot_pos = Point()
                 robot_pos.x = xTrue[0]
                 robot_pos.y = xTrue[1]
                 line_list.points.append(robot_pos)
 
-                rfid_pos = Point()
-                rfid_pos.x = pos[0]
-                rfid_pos.y = pos[1]
-                line_list.points.append(rfid_pos)
+                LM_pos = Point()
+                LM_pos.x = pos[0]
+                LM_pos.y = pos[1]
+                line_list.points.append(LM_pos)
                 line_list.scale.x = 0.01
 
                 line_list.color.r = 75/255

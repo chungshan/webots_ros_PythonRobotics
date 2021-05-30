@@ -1,35 +1,38 @@
 import rospy
 from nav_msgs.msg import Path
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Point32, Point
 from tf.transformations import *
+from visualization_msgs.msg import Marker
+from sensor_msgs.msg import PointCloud
 
+import numpy as np
 class ros_publisher():
     def __init__(self):
         self.xTrue_pub = rospy.Publisher("xTrue", Path, queue_size=10)
         self.xDR_pub = rospy.Publisher("xDR", Path, queue_size=10)
-        self.xEst_pub = rospy.Publisher("xEst", Path, queue_size=10)
+        self.xEst_pub = rospy.Publisher("xEst", PointCloud, queue_size=10)
+        self.LM_marker = rospy.Publisher("visualization_marker_LM", Marker, queue_size=10)
+        self.line_marker = rospy.Publisher("visualization_marker_line", Marker, queue_size=10)
         self.xTrue_path = Path()
         self.xDR_path = Path()
         self.xEst_path = Path()
         self.xTrue_list = []
         self.xEst_list = []
         self.xDR_list = []
-    def publish(self, xTrue, xEst, xDR):
-        pose = PoseStamped()
-        pose.header.stamp = rospy.Time.now()
-        pose.header.frame_id = "map"
-        pose.pose.position.x = xEst[0]
-        pose.pose.position.y = xEst[1]
-        q = quaternion_from_euler(0, 0, xEst[2])
-        pose.pose.orientation.x = q[0]
-        pose.pose.orientation.y = q[1]
-        pose.pose.orientation.z = q[2]
-        pose.pose.orientation.w = q[3]
-        self.xEst_list.append(pose)
-        self.xEst_path.header.stamp = rospy.Time.now()
-        self.xEst_path.poses = self.xEst_list
-        self.xEst_path.header.frame_id = "map"
-        self.xEst_pub.publish(self.xEst_path)
+    def publish(self, xTrue, xEst, xDR, LM_pose, max_range):
+        grid = PointCloud()
+        grid.header.stamp = rospy.Time.now()
+        grid.header.frame_id = "map"
+        grid_list = []
+        xEst = np.transpose(xEst)
+        for x in xEst:
+            point_ = Point32()
+            point_.x = x[0]
+            point_.y = x[1]
+            point_.z = 0
+            grid_list.append(point_)
+        grid.points = grid_list
+        self.xEst_pub.publish(grid)
         # trajectory
         pose = PoseStamped()
         pose.header.stamp = rospy.Time.now()
@@ -64,3 +67,47 @@ class ros_publisher():
         self.xDR_path.poses = self.xDR_list
         self.xDR_path.header.frame_id = "map"
         self.xDR_pub.publish(self.xDR_path)
+
+        # rfid marker
+        marker = Marker()
+        marker.header.stamp = rospy.Time.now()
+        marker.header.frame_id = "map"
+        marker.type = 8
+        for pos in LM_pose:
+            LM_pos = Point()
+            LM_pos.x = pos[0]
+            LM_pos.y = pos[1]
+            marker.points.append(LM_pos)
+            marker.scale.x = 0.1
+            marker.scale.y = 0.1
+            marker.scale.z = 0.1
+
+            marker.color.r = 1
+            marker.color.g = 1
+            marker.color.b = 0
+            marker.color.a = 1
+        self.LM_marker.publish(marker)
+
+        # LM lines
+        line_list = Marker()
+        line_list.header.stamp = rospy.Time.now()
+        line_list.header.frame_id = "map"
+        line_list.type = 5
+        for pos in LM_pose:
+            if np.sqrt(np.sum((xTrue[0:2].T[0] - pos) ** 2)) < max_range:
+                robot_pos = Point()
+                robot_pos.x = xTrue[0]
+                robot_pos.y = xTrue[1]
+                line_list.points.append(robot_pos)
+
+                LM_pos = Point()
+                LM_pos.x = pos[0]
+                LM_pos.y = pos[1]
+                line_list.points.append(LM_pos)
+                line_list.scale.x = 0.01
+
+                line_list.color.r = 75 / 255
+                line_list.color.g = 70 / 255
+                line_list.color.b = 1
+                line_list.color.a = 1
+        self.line_marker.publish(line_list)
