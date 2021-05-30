@@ -10,6 +10,8 @@ If you don't understand UKF, I recommend reading these materials:
 * [The Unscented Kalman Filter for Nonlinear Estimation (paper)](https://www.seas.harvard.edu/courses/cs281/papers/unscented.pdf)
 
 # Algorithm
-These equation labellings can map to code ()
+These equation labellings can map to code.
+
+[ukf_estimation](https://github.com/virtualclone/webots_ros_PythonRobotics/blob/main/catkin_ws/src/localization/scirpts/ukf/ukf.py#L153-L174)
 ![alt text](../../../../../figs/ukf_predict.png "ukf equations predict")
 ![alt text](../../../../../figs/ukf_update.png "ukf equations update")

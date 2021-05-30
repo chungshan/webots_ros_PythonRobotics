@@ -12,7 +12,9 @@ If you don't understand histogram filters, I recommend reading these materials:
 
 
 # Algorithm
-These equation labellings can map to code ()
+These equation labellings can map to code.
+
+[histogram_filter_localization](https://github.com/virtualclone/webots_ros_PythonRobotics/blob/main/catkin_ws/src/localization/scirpts/histogram_filter/histogram_filter.py#L56-L60)
 ![alt text](../../../../../figs/historgram_filter.png "hf")
 
 # Note
