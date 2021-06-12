@@ -18,6 +18,7 @@ RectangleArena {
   wallHeight 0.5
 }
 TurtleBot3Burger {
+  hidden rotation_12 -0.00890233477760346 -0.9999603734326212 -4.808643743525077e-09 1.0803084945912408e-06
   translation 0 0 -1.45454e-05
   rotation 0 1 0 -1.5708
   controller "ros"

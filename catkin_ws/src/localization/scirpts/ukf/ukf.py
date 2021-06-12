@@ -188,8 +188,8 @@ def main():
     print(__file__ + " start!!")
     rospy.init_node('ukf', anonymous=True)
     pid = sys.argv[1]
-    rospy.Subscriber(f"/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/gps/values", NavSatFix, gps_cb)
-    rospy.Subscriber(f"/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/inertial_unit/roll_pitch_yaw", Imu, imu_cb)
+    rospy.Subscriber(f"/{pid}/gps/values", NavSatFix, gps_cb)
+    rospy.Subscriber(f"/{pid}/inertial_unit/roll_pitch_yaw", Imu, imu_cb)
     rospy.Subscriber("cmd_vel", Twist, cmd_cb)
     ros_pub = ros_publisher()
     while None in turtlebot3_state.cmd_input or None in turtlebot3_state.gps or None in turtlebot3_state.orientation:

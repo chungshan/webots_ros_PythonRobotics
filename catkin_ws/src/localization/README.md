@@ -1,6 +1,6 @@
 # Localization
 In this section, I implement [Localization](https://pythonrobotics.readthedocs.io/en/latest/modules/localization.html) includes EKF, UKF, particle filter and histogram filter
-[![Localization](https://img.youtube.com/vi/HW_z4Ee8qWE/0.jpg)](https://www.youtube.com/watch?v=HW_z4Ee8qWE)
+[![Localization](https://img.youtube.com/vi/hp-lATCbfkw/0.jpg)](https://www.youtube.com/watch?v=hp-lATCbfkw)
 # How to use
 1. Run roscore
 ```
@@ -18,11 +18,11 @@ You will see many rosservices like this:
 ```
 /TurtleBot3Burger_37899_username_computer_name/set_logger_level
 ```
-37899 is your PID of ros controller
+```TurtleBot3Burger_37899_username_computer_name``` is your PID of ros controller
 
 3. Running nodes with your PID
 ```
-roslaunch roslaunch localization ekf.launch pid:=37899
+roslaunch localization ekf.launch pid:=TurtleBot3Burger_37899_username_computer_name
 ```
 4. Teleporate your Turtlebot3 to see the result
 # Visualization

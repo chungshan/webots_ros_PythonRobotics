@@ -11,7 +11,7 @@ Panels:
         - /PointCloud1
         - /Marker1
       Splitter Ratio: 0.5
-    Tree Height: 746
+    Tree Height: 363
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -30,7 +30,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: PointCloud
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -139,7 +139,7 @@ Visualization Manager:
       Marker Topic: /visualization_marker_line
       Name: Marker
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -147,7 +147,7 @@ Visualization Manager:
       Marker Topic: /visualization_marker_LM
       Name: Marker
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -178,7 +178,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 8.804490089416504
+      Distance: 6.818197250366211
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -186,9 +186,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.48278340697288513
-        Y: -0.04212566837668419
-        Z: 1.152527093887329
+        X: 2.0225136280059814
+        Y: 0.11084862798452377
+        Z: 2.53865122795105
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

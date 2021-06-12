@@ -8,37 +8,37 @@ import sys
 
 rospy.init_node('slam', anonymous=True)
 pid = sys.argv[1]
-righ_wheel_set_pos = rospy.ServiceProxy(f'/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/right_wheel_motor/set_position', set_float)
-left_wheel_set_pos = rospy.ServiceProxy(f'/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/left_wheel_motor/set_position', set_float)
-righ_wheel_set_vel = rospy.ServiceProxy(f'/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/right_wheel_motor/set_velocity', set_float)
-left_wheel_set_vel = rospy.ServiceProxy(f'/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/left_wheel_motor/set_velocity', set_float)
+righ_wheel_set_pos = rospy.ServiceProxy(f'/{pid}/right_wheel_motor/set_position', set_float)
+left_wheel_set_pos = rospy.ServiceProxy(f'/{pid}/left_wheel_motor/set_position', set_float)
+righ_wheel_set_vel = rospy.ServiceProxy(f'/{pid}/right_wheel_motor/set_velocity', set_float)
+left_wheel_set_vel = rospy.ServiceProxy(f'/{pid}/left_wheel_motor/set_velocity', set_float)
 righ_wheel_set_pos(float("inf"))
 left_wheel_set_pos(float("inf"))
 righ_wheel_set_vel(0)
 left_wheel_set_vel(0)
 
 # lidar_motor
-lds_main_motor_set_pos = rospy.ServiceProxy(f'/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/LDS_01_main_motor/set_position', set_float)
-lds_sec_motor_set_pos = rospy.ServiceProxy(f'/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/LDS_01_secondary_motor/set_position', set_float)
-lds_main_motor_set_vel = rospy.ServiceProxy(f'/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/LDS_01_main_motor/set_velocity', set_float)
-lds_sec_motor_set_vel = rospy.ServiceProxy(f'/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/LDS_01_secondary_motor/set_velocity', set_float)
+lds_main_motor_set_pos = rospy.ServiceProxy(f'/{pid}/LDS_01_main_motor/set_position', set_float)
+lds_sec_motor_set_pos = rospy.ServiceProxy(f'/{pid}/LDS_01_secondary_motor/set_position', set_float)
+lds_main_motor_set_vel = rospy.ServiceProxy(f'/{pid}/LDS_01_main_motor/set_velocity', set_float)
+lds_sec_motor_set_vel = rospy.ServiceProxy(f'/{pid}/LDS_01_secondary_motor/set_velocity', set_float)
 lds_main_motor_set_pos(float("inf"))
 lds_sec_motor_set_pos(float("inf"))
 lds_main_motor_set_vel(30.0)
 lds_sec_motor_set_vel(60.0)
 
 # lidar
-lds_enable = rospy.ServiceProxy(f'/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/LDS_01/enable', set_int)
-lds_pcl_enable = rospy.ServiceProxy(f'/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/LDS_01/enable_point_cloud', set_bool)
+lds_enable = rospy.ServiceProxy(f'/{pid}/LDS_01/enable', set_int)
+lds_pcl_enable = rospy.ServiceProxy(f'/{pid}/LDS_01/enable_point_cloud', set_bool)
 lds_enable(int(32))
 lds_pcl_enable(True)
 
 # gps
-gps_enable = rospy.ServiceProxy(f'/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/gps/enable', set_int)
+gps_enable = rospy.ServiceProxy(f'/{pid}/gps/enable', set_int)
 gps_enable(int(32))
 
 # imu: get pitch, roll, yaw of agv
-imu_enable = rospy.ServiceProxy(f'/TurtleBot3Burger_{pid}_alfred_Aspire_VX5_591G/inertial_unit/enable', set_int)
+imu_enable = rospy.ServiceProxy(f'/{pid}/inertial_unit/enable', set_int)
 imu_enable(int(32))
 
 def cmd_cb(data):
